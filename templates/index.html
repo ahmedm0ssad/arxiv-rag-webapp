@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arXiv RAG - Query Computer Science Papers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding-bottom: 40px;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .query-form {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .response-area {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .sources-area {
+            background-color: #f1f8ff;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #0d6efd;
+            margin-top: 1rem;
+        }
+        .source-item {
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+        .source-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .spinner-border {
+            display: none;
+            margin-left: 10px;
+        }
+        #generatedResponse {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>arXiv RAG Pipeline</h1>
+            <p class="lead">Ask questions about arXiv Computer Science papers using Retrieval-Augmented Generation</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="query-form">
+            <h2 class="mb-4">Ask a Question</h2>
+            <form id="queryForm">
+                <div class="mb-3">
+                    <label for="queryInput" class="form-label">Your Question</label>
+                    <textarea class="form-control" id="queryInput" rows="3" placeholder="e.g., What are the recent advancements in deep learning?"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="topK" class="form-label">Number of sources to retrieve (k)</label>
+                    <select class="form-select" id="topK">
+                        <option value="3" selected>3 sources</option>
+
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitButton">
+                    Generate Response
+                    <span class="spinner-border spinner-border-sm" id="loadingSpinner" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+
+        <div class="response-area" id="responseContainer" style="display: none;">
+            <h2 class="mb-4">Generated Response</h2>
+            <div id="generatedResponse" class="mb-4"></div>
+            
+            <div class="sources-area">
+                <h5>Sources</h5>
+                <div id="sourcesContainer"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Built with Flask, FAISS, SentenceTransformers and Gemini</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('queryInput').value.trim();
+            const k = document.getElementById('topK').value;
+            
+            if (!query) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            // Show loading spinner
+            const submitButton = document.getElementById('submitButton');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            submitButton.disabled = true;
+            loadingSpinner.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query, k }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Display the response
+                    document.getElementById('responseContainer').style.display = 'block';
+                    document.getElementById('generatedResponse').textContent = data.response;
+                    
+                    // Display sources
+                    const sourcesContainer = document.getElementById('sourcesContainer');
+                    sourcesContainer.innerHTML = '';
+                    
+                    data.sources.forEach((source, index) => {
+                        const sourceEl = document.createElement('div');
+                        sourceEl.className = 'source-item';
+                        sourceEl.innerHTML = `
+                            <strong>${index + 1}.</strong> ${source.title} 
+                            <span class="badge bg-primary">${(source.score * 100).toFixed(1)}% match</span>
+                        `;
+                        sourcesContainer.appendChild(sourceEl);
+                    });
+                    
+                    // Scroll to response
+                    document.getElementById('responseContainer').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                } else {
+                    alert(`Error: ${data.error || 'Unknown error occurred'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request');
+            } finally {
+                // Hide loading spinner
+                submitButton.disabled = false;
+                loadingSpinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
