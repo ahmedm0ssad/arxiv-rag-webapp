@@ -151,6 +151,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Project Link: [https://github.com/ahmedm0ssad/arxiv-rag-webapp](https://github.com/ahmedm0ssad/arxiv-rag-webapp)
 
+![App UI Screenshot] (Screenshot (4).png)
+
+![App UI Screenshot] (Screenshot (5).png)
+
 ---
 
 ⭐ **Star this repository if you found it helpful!**
