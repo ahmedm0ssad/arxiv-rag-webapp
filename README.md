@@ -34,7 +34,7 @@ This web application implements a **Retrieval-Augmented Generation (RAG)** pipel
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/arxiv-rag-webapp.git
+git clone https://github.com/ahmedm0ssad/arxiv-rag-webapp.git
 cd arxiv-rag-webapp
 ```
 
